@@ -140,10 +140,6 @@ npm run dev
 
 <hr />
 
-<h2>🤝 Join the Mission</h2>
-<p>Got ideas to make ReadmeGenerator even better? Check <code>CONTRIBUTING.md</code> for how to contribute.</p>
-
-<hr />
 
 <h2>📜 License</h2>
 <p>Proudly licensed under the <strong>MIT License</strong>.</p>
@@ -155,8 +151,6 @@ npm run dev
   <strong>Anirudh Negi</strong><br />
   Reach out on GitHub: <a href="https://github.com/anirudhnegi2007" target="_blank" rel="noopener">anirudhnegi2007</a>
 </p>
-
-<p>Big thanks to the open-source community for inspiring this project!</p>
 
 <hr />
 
