@@ -9,8 +9,8 @@ if (!process.env.GEMINI_API_KEY) {
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// Parse GitHub URL to extract owner and repo name
-function parseGitHubUrl(repoUrl) {
+// Use GitHub URL to extract owner and repo name
+function GitHubUrlInfo(repoUrl) {
   let url;
   try {
     url = new URL(repoUrl);
@@ -90,7 +90,7 @@ async function generateWithGemini(prompt) {
       throw new Error('GEMINI_API_KEY is required in environment variables');
     }
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
    const result = await model.generateContent(prompt);
     const text = result.response.text();
 
@@ -105,8 +105,8 @@ async function generateWithGemini(prompt) {
 // Main function to generate README for a repository
 export async function generateReadmeForRepo({ repoUrl, tone = 'professional' }) {
   try {
-    // Parse the GitHub URL
-    const { owner, repo } = parseGitHubUrl(repoUrl);
+    // Get the GitHub URL Info
+    const { owner, repo } = GitHubUrlInfo(repoUrl);
     
     // Fetch repository data
     const repoData = await fetchRepoData(owner, repo);
