@@ -75,12 +75,8 @@ npm install
   </thead>
   <tbody>
     <tr>
-      <td><code>GITHUB_CLIENT_ID</code></td>
-      <td>Your GitHub OAuth Client ID</td>
-    </tr>
-    <tr>
-      <td><code>GITHUB_CLIENT_SECRET</code></td>
-      <td>Your GitHub OAuth Secret</td>
+      <td><code>GEMINI_API_KEY</code></td>
+      <td>Your Gemini Api Key</td>
     </tr>
     <tr>
       <td><code>PORT</code></td>
