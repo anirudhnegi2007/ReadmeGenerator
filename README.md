@@ -105,19 +105,10 @@ npm run dev
 <h2>🪐 How It Works</h2>
 
 <ol>
-  <li>Sign in with GitHub OAuth.</li>
   <li>Pick a repository from your GitHub universe.</li>
   <li>Add your project's unique details (features, usage, etc.).</li>
   <li>Preview and download a stellar README.</li>
 </ol>
-
-<p><strong>Example API Call:</strong></p>
-
-<pre><code>fetch('/api/repos/:repoId')
-  .then(res => res.json())
-  .then(data => console.log('Repo data:', data))
-  .catch(err => console.error('Error:', err));
-</code></pre>
 
 <hr />
 
