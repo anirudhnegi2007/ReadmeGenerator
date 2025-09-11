@@ -27,7 +27,6 @@
 <p>
   <strong>Frontend:</strong> React, Vite, JavaScript, HTML, CSS<br />
   <strong>Backend:</strong> Node.js, Express.js<br />
-  <strong>Auth:</strong> GitHub OAuth<br />
   <strong>Markdown:</strong> Gemini API<br />
   <strong>Tools:</strong> ESLint, Git
 </p>
