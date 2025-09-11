@@ -15,7 +15,6 @@
 <h2>🎉 Why You'll Love It</h2>
 <ul>
   <li><strong>Lightning-Fast READMEs:</strong> Generate polished documentation in just a few clicks.</li>
-  <li><strong>Secure GitHub Login:</strong> Access your repos safely with OAuth integration.</li>
   <li><strong>Gemini Magic:</strong> Create beautifully formatted markdown with Gemini API.</li>
   <li><strong>Fully Customizable:</strong> Tweak every section to match your project's vibe.</li>
   <li><strong>Team-Ready:</strong> Collaborate effortlessly on documentation.</li>
