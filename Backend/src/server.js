@@ -7,6 +7,8 @@ import { AuthRoutes } from './routes/authRoutes.js';
 
 dotenv.config();
 
+initializeFirebaseAdmin();
+
 const app = express();
 
 app.use(
