@@ -52,7 +52,7 @@ async function fetchRepoData(owner, repo) {
   }
 }
 
-// Create a simple prompt for Gemini
+// simple prompt for Gemini
 function buildPrompt(repoData, tone = 'professional') {
   const prompt = `You are a expert Readme generator AI.
   Create a professional README.md file for this GitHub repository.

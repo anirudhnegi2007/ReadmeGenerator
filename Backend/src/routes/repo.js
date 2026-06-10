@@ -3,12 +3,15 @@
 import { Router } from 'express';
 import { generateReadmeForRepo } from '../services/readmeService.js';
 import dotenv from 'dotenv';
+import { verifyFirebaseToken } from '../middlewares/verifyFirebase.js';
+import { requireGitHubToken } from '../middlewares/authMiddleware.js';
+  
   
 dotenv.config();
 const router = Router();
 
 
-router.post('/generate', async (req, res) => {
+router.post('/generate',verifyFirebaseToken,requireGitHubToken, async (req, res) => {
   try {
     console.log('Incoming body:', req.body);
 
