@@ -3,7 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import router from './routes/repo.js';
 import { AuthRoutes } from './routes/authRoutes.js';
-
+import { initializeFirebaseAdmin } from './Config/FirebaseAdmin.js';
 
 dotenv.config();
 

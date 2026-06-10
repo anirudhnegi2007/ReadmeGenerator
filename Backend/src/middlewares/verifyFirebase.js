@@ -1,4 +1,5 @@
-import {auth } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
+const auth = getAuth();
 // middleware to verfiy firebase token
 export async function verifyFirebaseToken(req, res, next) {
     const authHeader = req.headers['authorization'];

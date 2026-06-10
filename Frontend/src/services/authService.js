@@ -55,4 +55,21 @@ export { handleLogin };
 
 
 
+// logout function to sign out from Firebase and notify backend
+
+const logout = async () => {
+  try {
+    await auth.signOut();
+    await fetch("/api/auth/logout", {
+      method: "POST",
+      credentials: "include",
+    });
+  } catch (error) {
+    console.error("Error during logout:", error);
+  }
+};
+
+export { logout };
+
+
 
