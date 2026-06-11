@@ -8,13 +8,8 @@ export function requireGitHubToken(req, res, next) {
     req.session?.user?.github?.token;
 
  
-  if (!token) {
-    return res.status(401).json({ message: "Missing GitHub access token" });
-  }
+  req.githubToken = token || null;
 
-  
-  req.githubToken = token;
-
-  console.log("GitHub token found for request.");
+  console.log(token ? "GitHub token found for request." : "No GitHub token provided.");
   next();
 }
