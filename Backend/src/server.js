@@ -2,11 +2,11 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import router from './routes/repo.js';
-import { AuthRoutes } from './routes/authRoutes.js';
+import AuthRoutes from './routes/authRoutes.js';
 import { initializeFirebaseAdmin } from './Config/FirebaseAdmin.js';
 
 dotenv.config();
-
+console.log("PROJECT ID:", process.env.FIREBASE_PROJECT_ID);
 initializeFirebaseAdmin();
 
 const app = express();
@@ -44,7 +44,7 @@ console.error("Global error handler:",{
 });
   
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
   console.log(`README Generator backend listening on port ${PORT}`);
 });

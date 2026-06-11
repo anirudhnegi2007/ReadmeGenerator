@@ -4,7 +4,7 @@ import { Router } from 'express';
 import { generateReadmeForRepo } from '../services/readmeService.js';
 import dotenv from 'dotenv';
 import { verifyFirebaseToken } from '../middlewares/verifyFirebase.js';
-import { requireGitHubToken } from '../middlewares/authMiddleware.js';
+import { requireGitHubToken } from '../middlewares/AuthMiddleware.js';
   
   
 dotenv.config();
@@ -20,7 +20,7 @@ router.post('/generate',verifyFirebaseToken,requireGitHubToken, async (req, res)
       return res.status(400).json({ error: 'repoUrl is required and must be a string' });
     }
 
-    const result = await generateReadmeForRepo({ repoUrl, tone, includeBadges: !!includeBadges });
+    const result = await generateReadmeForRepo({ repoUrl, tone, includeBadges: !!includeBadges, githubToken: req.githubToken });
     res.json(result);
   } catch (err) {
     console.error('Error generating README:', err);

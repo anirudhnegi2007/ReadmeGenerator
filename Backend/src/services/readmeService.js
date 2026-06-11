@@ -34,13 +34,17 @@ function GitHubUrlInfo(repoUrl) {
 }
 
 // Fetch repository metadata from GitHub API
-async function fetchRepoData(owner, repo) {
+async function fetchRepoData(owner, repo, githubToken) {
   try {
+    const headers = {
+      'Accept': 'application/vnd.github+json',
+      'User-Agent': 'README-Generator'
+    };
+    if (githubToken) {
+      headers['Authorization'] = `Bearer ${githubToken}`;
+    }
     const response = await axios.get(`https://api.github.com/repos/${owner}/${repo}`, {
-      headers: {
-        'Accept': 'application/vnd.github+json',
-        'User-Agent': 'README-Generator'
-      }
+      headers
     });
     console.log('GitHub API Response:', response.data);
     return response.data;
@@ -105,13 +109,13 @@ async function generateWithGemini(prompt) {
 }
 
 // Main function to generate README for a repository
-export async function generateReadmeForRepo({ repoUrl, tone = 'professional' }) {
+export async function generateReadmeForRepo({ repoUrl, tone = 'professional', githubToken }) {
   try {
     // Get the GitHub URL Info
     const { owner, repo } = GitHubUrlInfo(repoUrl);
     
     // Fetch repository data
-    const repoData = await fetchRepoData(owner, repo);
+    const repoData = await fetchRepoData(owner, repo, githubToken);
     
     // Build prompt for AI
     const prompt = buildPrompt(repoData, tone);
