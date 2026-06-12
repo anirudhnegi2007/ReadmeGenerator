@@ -1,35 +1,30 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Github, 
   FileText,
-  Eye,
-  Code,
   Download,
   Copy,
   Sparkles,
-  Folder,
-  File,
-  ChevronDown,
-  ChevronRight,
   Lock,
   Unlock,
-  RefreshCw,
   Check,
   AlertCircle,
-  Search,
   Link as LinkIcon,
   Loader,
   GitBranch,
-  Star,
-  BookOpen,
-  Zap,
-  Terminal,
-  Image as ImageIcon,
-  Database,
-  Settings,
-  ExternalLink
+  Star
 } from 'lucide-react';
+import { loginWithGitHub, logout } from './services/authService.js';
+import { auth } from './services/Firebase.js';
+import { onAuthStateChanged } from 'firebase/auth';
+import ReviewSection from './components/ReviewSection.jsx';
+import FileTree from './components/FileTree.jsx';
+import { 
+  parseGitHubUrl, 
+  fetchRepositoryData, 
+  fetchRepositoryFiles, 
+  generateReadmeWithGemini 
+} from './services/githubService.js';
 
 const Dashboard = () => {
   // GitHub Integration State
@@ -43,171 +38,68 @@ const Dashboard = () => {
   // README Generation State
   const [generatedReadme, setGeneratedReadme] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [viewMode, setViewMode] = useState('preview'); // 'preview' or 'markdown'
   
   // UI State
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [copiedToClipboard, setCopiedToClipboard] = useState(false);
 
-  // Parse GitHub URL
-  const parseGitHubUrl = (url) => {
-    const regex = /github\.com\/([^\/]+)\/([^\/]+)/;
-    const match = url.match(regex);
-    if (match) {
-      return {
-        owner: match[1],
-        repo: match[2].replace('.git', '')
-      };
-    }
-    return null;
-  };
+  // Authentication State
+  const [user, setUser] = useState(null);
+  const [githubToken, setGithubToken] = useState(localStorage.getItem('githubToken') || null);
+  const [firebaseToken, setFirebaseToken] = useState(localStorage.getItem('firebaseToken') || null);
 
-  // Infer language from file extension
-  const getLanguageFromExt = (ext) => {
-    const map = {
-      js: 'javascript',
-      jsx: 'jsx',
-      ts: 'typescript',
-      tsx: 'tsx',
-      html: 'html',
-      css: 'css',
-      json: 'json',
-      md: 'markdown',
-      txt: 'text',
-      gitignore: 'text',
-      env: 'text',
-      png: 'image',
-      jpg: 'image',
-      jpeg: 'image',
-      svg: 'image',
-      ico: 'image',
-    };
-    return map[ext.toLowerCase()] || 'unknown';
-  };
-
-  // Fetch repository data from GitHub API
-  const fetchRepositoryData = async (owner, repo) => {
-    const res = await fetch(`https://api.github.com/repos/${owner}/${repo}`);
-    if (!res.ok) {
-      throw new Error(`Failed to fetch repository data: ${res.statusText}`);
-    }
-    const data = await res.json();
-    return {
-      name: data.name,
-      owner: data.owner.login,
-      description: data.description || '',
-      language: data.language,
-      topics: data.topics || [],
-      license: data.license ? data.license.key : 'MIT',
-      stars: data.stargazers_count,
-      is_private: data.private,
-      default_branch: data.default_branch || 'main'
-    };
-  };
-
-  // Fetch repository file tree from GitHub API and build nested structure
-  const fetchRepositoryFiles = async (owner, repo, branch) => {
-    const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`);
-    if (!res.ok) {
-      throw new Error(`Failed to fetch repository files: ${res.statusText}`);
-    }
-    const data = await res.json();
-
-    // Build nested tree from flat paths
-    const root = [];
-    const paths = data.tree.sort((a, b) => a.path.localeCompare(b.path));
-    paths.forEach(item => {
-      const parts = item.path.split('/');
-      let currentLevel = root;
-      parts.forEach((part, i) => {
-        let node = currentLevel.find(n => n.name === part);
-        if (!node) {
-          const path = parts.slice(0, i + 1).join('/');
-          node = {
-            name: part,
-            path,
-            type: i === parts.length - 1 && item.type === 'blob' ? 'file' : 'folder',
-          };
-          if (node.type === 'folder') {
-            node.children = [];
-          } else {
-            node.language = getLanguageFromExt(part.split('.').pop());
-          }
-          currentLevel.push(node);
-        }
-        if (node.type === 'folder') {
-          currentLevel = node.children;
-        }
-      });
-    });
-    return root;
-  };
-
-  // Analyze repository structure
-  const analyzeRepository = (files) => {
-    const stats = {
-      totalFiles: 0,
-      totalFolders: 0,
-      languages: new Set(),
-      hasTests: false,
-      hasDocumentation: false,
-      hasCICD: false,
-      frameworks: new Set()
-    };
-
-    const traverse = (items) => {
-      items.forEach(item => {
-        if (item.type === 'folder') {
-          stats.totalFolders++;
-          if (item.name === 'tests' || item.name === '__tests__') stats.hasTests = true;
-          if (item.children) traverse(item.children);
-        } else {
-          stats.totalFiles++;
-          if (item.language) stats.languages.add(item.language);
-          if (item.name === 'README.md') stats.hasDocumentation = true;
-        }
-      });
-    };
-
-    traverse(files);
-
-    // Detect frameworks (simplified)
-    if (stats.languages.has('jsx') || stats.languages.has('tsx')) {
-      stats.frameworks.add('React');
-    }
-
-    return stats;
-  };
-
-  // Generate README using backend 
-  const generateReadmeWithGemini = async (repoData, repoFiles, selectedFilePaths) => {
-    const repoUrl = `https://github.com/${repoData.owner}/${repoData.name}`;
-    const analysis = analyzeRepository(repoFiles); // Local analysis for potential use
-
-    try {
-      const response = await fetch('http://localhost:5000/services/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          repoUrl,
-          tone: 'professional',
-          includeBadges: true,
-          selectedFiles: Array.from(selectedFilePaths), 
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to generate README');
+  // Auth State Listener
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
+        const idToken = await currentUser.getIdToken();
+        setFirebaseToken(idToken);
+        localStorage.setItem('firebaseToken', idToken);
+      } else {
+        setUser(null);
+        setGithubToken(null);
+        setFirebaseToken(null);
+        localStorage.removeItem('githubToken');
+        localStorage.removeItem('firebaseToken');
       }
+    });
+    return () => unsubscribe();
+  }, []);
 
-      return data.markdown;
-    } catch (error) {
-      throw new Error('Failed to generate README with backend');
+  const handleSignIn = async () => {
+    setError(null);
+    setSuccess(null);
+    try {
+      const { firebaseUser, githubAccessToken } = await loginWithGitHub();
+      const idToken = await firebaseUser.getIdToken();
+      setUser(firebaseUser);
+      setGithubToken(githubAccessToken);
+      setFirebaseToken(idToken);
+      localStorage.setItem('githubToken', githubAccessToken);
+      localStorage.setItem('firebaseToken', idToken);
+      setSuccess('Successfully authenticated with GitHub!');
+    } catch (err) {
+      console.error(err);
+      setError('GitHub Authentication failed. Please try again.');
+    }
+  };
+
+  const handleSignOut = async () => {
+    setError(null);
+    setSuccess(null);
+    try {
+      await logout();
+      setUser(null);
+      setGithubToken(null);
+      setFirebaseToken(null);
+      localStorage.removeItem('githubToken');
+      localStorage.removeItem('firebaseToken');
+      setSuccess('Logged out successfully.');
+    } catch (err) {
+      console.error(err);
+      setError('Logout failed.');
     }
   };
 
@@ -225,8 +117,8 @@ const Dashboard = () => {
     setIsLoadingRepo(true);
     
     try {
-      const data = await fetchRepositoryData(parsed.owner, parsed.repo);
-      const files = await fetchRepositoryFiles(parsed.owner, parsed.repo, data.default_branch);
+      const data = await fetchRepositoryData(parsed.owner, parsed.repo, githubToken);
+      const files = await fetchRepositoryFiles(parsed.owner, parsed.repo, data.default_branch, githubToken);
       
       setRepoData(data);
       setRepoFiles(files);
@@ -254,7 +146,13 @@ const Dashboard = () => {
     setSuccess(null);
 
     try {
-      const readme = await generateReadmeWithGemini(repoData, repoFiles, selectedFiles);
+      const readme = await generateReadmeWithGemini(
+        repoData, 
+        repoFiles, 
+        selectedFiles, 
+        firebaseToken, 
+        githubToken
+      );
       setGeneratedReadme(readme);
       setSuccess('README generated successfully with Gemini AI! 🎉');
     } catch (err) {
@@ -290,77 +188,11 @@ const Dashboard = () => {
     });
   };
 
-  // Get file icon
-  const getFileIcon = (file) => {
-    if (file.type === 'folder') return <Folder className="w-4 h-4 text-blue-400" />;
-    
-    const ext = file.name.split('.').pop()?.toLowerCase();
-    switch (ext) {
-      case 'js':
-      case 'jsx':
-      case 'ts':
-      case 'tsx':
-        return <Code className="w-4 h-4 text-yellow-400" />;
-      case 'md':
-        return <FileText className="w-4 h-4 text-blue-400" />;
-      case 'json':
-        return <Database className="w-4 h-4 text-green-400" />;
-      case 'html':
-        return <Code className="w-4 h-4 text-orange-400" />;
-      case 'css':
-        return <Zap className="w-4 h-4 text-pink-400" />;
-      case 'png':
-      case 'jpg':
-      case 'svg':
-      case 'ico':
-        return <ImageIcon className="w-4 h-4 text-purple-400" />;
-      default:
-        return <File className="w-4 h-4 text-slate-400" />;
-    }
-  };
-
-  // Render file tree
-  const renderFileTree = (items, level = 0) => {
-    return items.map((item) => (
-      <div key={item.path}>
-        <div
-          className={`flex items-center gap-2 px-3 py-1.5 hover:bg-slate-700/50 cursor-pointer rounded transition-colors ${
-            selectedFiles.has(item.path) ? 'bg-slate-700' : ''
-          }`}
-          style={{ paddingLeft: `${level * 16 + 12}px` }}
-          onClick={() => {
-            if (item.type === 'folder') {
-              toggleFolder(item.path);
-            } else {
-              toggleFileSelection(item.path);
-            }
-          }}
-        >
-          {item.type === 'folder' && (
-            expandedFolders.has(item.path) ? 
-              <ChevronDown className="w-4 h-4 text-slate-400" /> : 
-              <ChevronRight className="w-4 h-4 text-slate-400" />
-          )}
-          {getFileIcon(item)}
-          <span className="text-sm text-slate-200 flex-1">{item.name}</span>
-          {item.type === 'file' && selectedFiles.has(item.path) && (
-            <Check className="w-4 h-4 text-green-400" />
-          )}
-        </div>
-        {item.type === 'folder' && expandedFolders.has(item.path) && item.children && (
-          <div>
-            {renderFileTree(item.children, level + 1)}
-          </div>
-        )}
-      </div>
-    ));
-  };
-
   // Copy to clipboard
   const copyToClipboard = () => {
     navigator.clipboard.writeText(generatedReadme);
     setCopiedToClipboard(true);
-    setTimeout(() => setCopiedToClipboard(false), 2000);
+    setTimeout(() => setCopiedToClipboard(false), 2050);
   };
 
   // Download README
@@ -371,46 +203,6 @@ const Dashboard = () => {
     a.href = url;
     a.download = 'README.md';
     a.click();
-  };
-
-  // Render markdown preview
-  const renderMarkdownPreview = (markdown) => {
-    if (!markdown) return '<p class="text-slate-400">No README generated yet. Click "Generate README with AI" to create one.</p>';
-    
-    let html = markdown;
-    
-    // Headers
-    html = html.replace(/^### (.*$)/gim, '<h3 class="text-2xl font-semibold mb-3 mt-6 text-slate-800">$1</h3>');
-    html = html.replace(/^## (.*$)/gim, '<h2 class="text-3xl font-semibold mb-4 mt-8 text-slate-900">$1</h2>');
-    html = html.replace(/^# (.*$)/gim, '<h1 class="text-4xl font-bold mb-6 mt-8 text-slate-900">$1</h1>');
-    
-    // Bold and italic
-    html = html.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-slate-900">$1</strong>');
-    html = html.replace(/\*(.*?)\*/g, '<em class="italic">$1</em>');
-    
-    // Links
-    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-blue-600 hover:underline">$1</a>');
-    
-    // Images
-    html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="max-w-full rounded-lg my-4 border border-slate-200" />');
-    
-    // Code blocks
-    html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg my-4 overflow-x-auto border border-slate-700"><code class="text-sm font-mono">$2</code></pre>');
-    
-    // Inline code
-    html = html.replace(/`([^`]+)`/g, '<code class="bg-slate-200 text-slate-900 px-2 py-1 rounded text-sm font-mono">$1</code>');
-    
-    // Lists
-    html = html.replace(/^\- (.*$)/gim, '<li class="ml-6 mb-2 text-slate-700">$1</li>');
-    html = html.replace(/^(\d+)\. (.*$)/gim, '<li class="ml-6 mb-2 text-slate-700">$2</li>');
-    
-    // Horizontal rule
-    html = html.replace(/^---$/gim, '<hr class="my-8 border-slate-300" />');
-    
-    // Blockquotes
-    html = html.replace(/^> (.*$)/gim, '<blockquote class="border-l-4 border-blue-500 pl-4 italic my-4 text-slate-600">$1</blockquote>');
-    
-    return html;
   };
 
   return (
@@ -428,33 +220,60 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {generatedReadme && (
-            <div className="flex items-center gap-3">
-              <button
-                onClick={copyToClipboard}
-                className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-all flex items-center gap-2"
-              >
-                {copiedToClipboard ? (
-                  <>
-                    <Check className="w-4 h-4 text-green-400" />
-                    Copied!
-                  </>
+          <div className="flex items-center gap-4">
+            {user ? (
+              <div className="flex items-center gap-3 bg-slate-700/50 px-4 py-2 rounded-lg border border-slate-600">
+                {user.photoURL ? (
+                  <img src={user.photoURL} alt="Avatar" className="w-6 h-6 rounded-full" />
                 ) : (
-                  <>
-                    <Copy className="w-4 h-4" />
-                    Copy
-                  </>
+                  <Github className="w-4 h-4 text-slate-400" />
                 )}
-              </button>
+                <span className="text-sm font-medium hidden md:inline">{user.displayName || user.email || 'Authenticated'}</span>
+                <button
+                  onClick={handleSignOut}
+                  className="px-3 py-1.5 bg-red-600/80 hover:bg-red-700 text-xs font-semibold rounded-md transition"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
               <button
-                onClick={downloadReadme}
-                className="px-4 py-2 bg-gradient-to-r from-[#00C9FF] to-[#92FE9D] text-slate-900 font-semibold rounded-lg hover:shadow-lg hover:shadow-[#00C9FF]/20 transition-all flex items-center gap-2"
+                onClick={handleSignIn}
+                className="px-4 py-2 bg-gradient-to-r from-[#00C9FF] to-[#92FE9D] text-slate-900 font-bold rounded-lg hover:shadow-lg transition-all flex items-center gap-2 text-sm"
               >
-                <Download className="w-4 h-4" />
-                Download
+                <Github className="w-4 h-4" />
+                Login with GitHub
               </button>
-            </div>
-          )}
+            )}
+
+            {generatedReadme && (
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={copyToClipboard}
+                  className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-all flex items-center gap-2"
+                >
+                  {copiedToClipboard ? (
+                    <>
+                      <Check className="w-4 h-4 text-green-400" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4" />
+                      Copy
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={downloadReadme}
+                  className="px-4 py-2 bg-gradient-to-r from-[#00C9FF] to-[#92FE9D] text-slate-900 font-semibold rounded-lg hover:shadow-lg hover:shadow-[#00C9FF]/20 transition-all flex items-center gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  Download
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* GitHub URL Input */}
@@ -565,10 +384,16 @@ const Dashboard = () => {
                   </span>
                 </div>
                 {repoFiles.length > 0 ? (
-                  renderFileTree(repoFiles)
+                  <FileTree 
+                    items={repoFiles}
+                    expandedFolders={expandedFolders}
+                    selectedFiles={selectedFiles}
+                    onToggleFolder={toggleFolder}
+                    onToggleFile={toggleFileSelection}
+                  />
                 ) : (
                   <div className="text-center text-slate-500 py-8">
-                    <Folder className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                    <Loader className="w-12 h-12 mx-auto mb-2 opacity-50 animate-spin" />
                     <p className="text-sm">No files found</p>
                   </div>
                 )}
@@ -587,61 +412,12 @@ const Dashboard = () => {
         {/* Main Content - README Display */}
         <div className="flex-1 flex flex-col bg-slate-900">
           {generatedReadme ? (
-            <>
-              {/* View Mode Toggle */}
-              <div className="bg-slate-800 border-b border-slate-700 px-6 py-3 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-[#00C9FF]" />
-                  <span className="font-semibold">README.md</span>
-                </div>
-                <div className="flex items-center gap-2 bg-slate-700 p-1 rounded-lg">
-                  <button
-                    onClick={() => setViewMode('preview')}
-                    className={`px-4 py-1.5 rounded-md transition-all text-sm font-medium ${
-                      viewMode === 'preview'
-                        ? 'bg-gradient-to-r from-[#00C9FF] to-[#92FE9D] text-slate-900'
-                        : 'text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    <Eye className="w-4 h-4 inline mr-1" />
-                    Preview
-                  </button>
-                  <button
-                    onClick={() => setViewMode('markdown')}
-                    className={`px-4 py-1.5 rounded-md transition-all text-sm font-medium ${
-                      viewMode === 'markdown'
-                        ? 'bg-gradient-to-r from-[#00C9FF] to-[#92FE9D] text-slate-900'
-                        : 'text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    <Code className="w-4 h-4 inline mr-1" />
-                    Markdown
-                  </button>
-                </div>
-              </div>
-
-              {/* Content Display */}
-              <div className="flex-1 overflow-auto">
-                {viewMode === 'preview' ? (
-                  <div className="p-8 bg-slate-900">
-                    <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-2xl p-8 min-h-[600px]">
-                      <div 
-                        className="prose prose-slate max-w-none"
-                        dangerouslySetInnerHTML={{ __html: renderMarkdownPreview(generatedReadme) }}
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="p-6">
-                    <div className="bg-slate-800 border border-slate-700 rounded-lg p-6">
-                      <pre className="text-sm text-slate-300 font-mono whitespace-pre-wrap overflow-x-auto">
-                        <code>{generatedReadme}</code>
-                      </pre>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </>
+            <ReviewSection 
+              readme={generatedReadme} 
+              isDashboard={true} 
+              onCopy={copyToClipboard} 
+              onDownload={downloadReadme} 
+            />
           ) : (
             <div className="flex items-center justify-center h-full">
               <div className="text-center max-w-md">

@@ -1,8 +1,46 @@
-import React from 'react';
-import { Zap, Sparkles, Shield, Users, Github, ArrowRight } from 'lucide-react';
-// import geminiLogo from './assets/gemini-color.svg'; // Uncomment if you have the SVG
+import React, { useState } from 'react';
+import { 
+  Zap, Sparkles, Shield, Users, Github, ArrowRight, 
+  Loader, AlertCircle
+} from 'lucide-react';
+import ReviewSection from './components/ReviewSection.jsx';
 
 const LandingPage = () => {
+  const [githubUrl, setGithubUrl] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [readme, setReadme] = useState('');
+  const [error, setError] = useState(null);
+
+  const handleGenerate = async (e) => {
+    e.preventDefault();
+    if (!githubUrl) return;
+    setIsGenerating(true);
+    setError(null);
+    setReadme('');
+    try {
+      const response = await fetch('http://localhost:5000/services/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          repoUrl: githubUrl,
+          tone: 'professional',
+          includeBadges: true,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || data.message || 'Failed to generate README');
+      }
+      setReadme(data.markdown);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-900 text-white">
       {/* Navigation */}
@@ -17,7 +55,7 @@ const LandingPage = () => {
               href="/dashboard"
               className="px-5 py-2.5 bg-gradient-to-r from-[#00C9FF] to-[#92FE9D] text-slate-900 font-semibold rounded-lg hover:from-cyan-600 hover:to-emerald-600 transition-all shadow-lg"
             >
-              Login with GitHub
+              Go to Dashboard
             </a>
           </div>
           <button className="md:hidden text-slate-400">
@@ -27,7 +65,7 @@ const LandingPage = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="py-24 text-center">
+      <section className="py-20 text-center">
         <div className="container mx-auto px-4 max-w-5xl">
           <h1 className="text-4xl md:text-5xl font-bold mb-6">
             GitHub README Generator
@@ -41,7 +79,7 @@ const LandingPage = () => {
               href="/dashboard"
               className="px-8 py-4 bg-gradient-to-r from-[#00C9FF] to-[#92FE9D] text-slate-900 font-semibold rounded-xl text-lg hover:from-cyan-600 hover:to-emerald-600 transition-all shadow-xl flex items-center gap-2"
             >
-              Get Started Free
+              Sign In / Open Dashboard
               <ArrowRight size={20} />
             </a>
             <a
@@ -52,6 +90,60 @@ const LandingPage = () => {
               <Github size={20} />
               View on GitHub
             </a>
+          </div>
+        </div>
+      </section>
+
+      {/* Free Public Repo Generator Section */}
+      <section className="py-16 bg-slate-800/40 border-y border-slate-850">
+        <div className="container mx-auto px-4 max-w-4xl">
+          <div className="bg-slate-900 rounded-2xl border border-slate-700 p-8 shadow-2xl">
+            <h2 className="text-3xl font-bold mb-3 text-center flex items-center justify-center gap-2">
+              <Sparkles className="text-[#00C9FF]" />
+              Free Public README Generator
+            </h2>
+            <p className="text-slate-400 text-center mb-8">
+              No sign-up required. Try generating a README for any public GitHub repository instantly.
+            </p>
+
+            <form onSubmit={handleGenerate} className="space-y-4">
+              <div className="flex flex-col md:flex-row gap-3">
+                <input
+                  type="text"
+                  placeholder="Paste GitHub Repo URL (e.g. https://github.com/facebook/react)"
+                  value={githubUrl}
+                  onChange={(e) => setGithubUrl(e.target.value)}
+                  className="flex-1 px-4 py-3.5 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#00C9FF] transition"
+                  disabled={isGenerating}
+                />
+                <button
+                  type="submit"
+                  disabled={isGenerating || !githubUrl}
+                  className="px-6 py-3.5 bg-gradient-to-r from-[#00C9FF] to-[#92FE9D] text-slate-900 font-bold rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader className="w-5 h-5 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-5 h-5" />
+                      Generate
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+
+            {error && (
+              <div className="mt-4 px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-2 text-red-300">
+                <AlertCircle size={20} className="flex-shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            <ReviewSection readme={readme} />
           </div>
         </div>
       </section>
@@ -78,12 +170,6 @@ const LandingPage = () => {
               <h3 className="text-xl font-semibold mb-3">Private Repository Support</h3>
               <p className="text-slate-400">Secure GitHub OAuth login to generate READMEs for private repos.</p>
             </div>
-
-            <div className="bg-slate-800/60 rounded-xl border border-slate-700 p-8 shadow-2xl hover:border-slate-400 hover:scale-105 transition">
-              <Users className="w-12 h-12 text-purple-400 mb-5" />
-              <h3 className="text-xl font-semibold mb-3">Team Collaboration Ready</h3>
-              <p className="text-slate-400">Perfect for open-source projects and team documentation.</p>
-            </div>
           </div>
         </div>
       </section>
@@ -96,8 +182,8 @@ const LandingPage = () => {
             <div className="bg-slate-800 rounded-xl border border-slate-700 p-8 shadow-2xl flex gap-6 items-start">
               <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-r from-[#00C9FF] to-[#92FE9D] rounded-full flex items-center justify-center text-slate-900 font-bold text-xl">1</div>
               <div>
-                <h3 className="text-xl font-semibold mb-2">Login with GitHub</h3>
-                <p className="text-slate-400">Secure OAuth authentication to access public and private repositories.</p>
+                <h3 className="text-xl font-semibold mb-2">Login with GitHub (Optional)</h3>
+                <p className="text-slate-400">Secure OAuth authentication to access private repositories.</p>
               </div>
             </div>
 
@@ -116,30 +202,7 @@ const LandingPage = () => {
                 <p className="text-slate-400">Click Generate — AI analyzes your repo and creates a professional README.</p>
               </div>
             </div>
-
-            <div className="bg-slate-800 rounded-xl border border-slate-700 p-8 shadow-2xl flex gap-6 items-start">
-              <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-r from-[#00C9FF] to-[#92FE9D] rounded-full flex items-center justify-center text-slate-900 font-bold text-xl">4</div>
-              <div>
-                <h3 className="text-xl font-semibold mb-2">Preview & Download</h3>
-                <p className="text-slate-400">Preview the generated markdown and download the final README.md file.</p>
-              </div>
-            </div>
           </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="py-24 text-center">
-        <div className="container mx-auto px-4">
-          <h2 className="text-4xl font-bold mb-6">Ready to Elevate Your Projects?</h2>
-          <p className="text-xl text-slate-400 mb-10">Start generating professional READMEs today — free and secure.</p>
-          <a
-            href="/dashboard"
-            className="inline-flex items-center gap-3 px-10 py-5 bg-gradient-to-r from-[#00C9FF] to-[#92FE9D] text-slate-900 font-semibold rounded-xl text-xl hover:from-cyan-600 hover:to-emerald-600 transition-all shadow-xl"
-          >
-            Get Started Now
-            <ArrowRight size={24} />
-          </a>
         </div>
       </section>
 
