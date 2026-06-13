@@ -62,6 +62,7 @@ function buildPrompt(repoData, tone = 'professional') {
   Create a professional README.md file for this GitHub repository.
 
 Repository Information:
+- Owner: ${repoData.owner?.login || 'Not specified'}
 - Name: ${repoData.name}
 - Description: ${repoData.description || 'No description provided'}
 - Language: ${repoData.language || 'Not specified'}
@@ -77,13 +78,21 @@ Instructions:
 - Write in a ${tone} tone
 - Add a Project title and description, features
 - Installation instructions
-- Tech Stack used
+- Tech Stack used. Represent the key technologies and frameworks using colorful, stylized shields.io badges with logo icons (using the 'for-the-badge' style) instead of simple text bullet points.
+  Select the matching stylized badges based on the detected technologies/languages of this repository.
 - Project structure
 - Include license information
-- Add badges for stars, forks, and license if applicable
+- Add real shields.io status badges at the top of the README.md. 
+  - Stars Badge,License Badge (if license specified),Pull Requests Badge
 - Make it well-structured with proper markdown formatting
-- Keep it concise but informative
-
+-make it more stylist and colorfull with badges and icons, and less text-heavy. Use more visual elements to enhance readability and appeal.
+-use real images and badges from shields.io based on the repository's actual data, not placeholders.and even the logo icons for repo is correct displayed.
+-formating should be clean and visually appealing, with a good balance of text and visual elements. 
+-visual element placed strategically to enhance readability and engagement, not just dumped in the readme.
+-give it a good structure and flow, with clear sections and headings.
+-more data you have about the repo, better the readme you can generate. so use all the data you have to make it more detailed and comprehensive.
+-give a beginner guide to understand the project and how to get started with it, even if the repo is complex. make it easy to understand for new developers at correct place in the readme, not just dumped in the readme.and make it more engaging and welcoming for new contributors and visualy appealing for them to explore the project and contribute to it.
+-dont just dump how to contribute in the readme, but make it more engaging and welcoming for new contributors and visualy appealing for them to explore the project and contribute to it. place it at correct place in the readme, not just dumped in the readme.
 Generate ONLY the markdown content for the README.md file:`;
 
   return prompt;
