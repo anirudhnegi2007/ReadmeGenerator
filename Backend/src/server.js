@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import router from './routes/repo.js';
 import AuthRoutes from './routes/authRoutes.js';
 import { initializeFirebaseAdmin } from './Config/FirebaseAdmin.js';
+import { globalLimiter } from './middlewares/rateLimiter.js';
 
 dotenv.config();
 console.log("PROJECT ID:", process.env.FIREBASE_PROJECT_ID);
@@ -18,7 +19,9 @@ app.use(
      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'x-github-token'],
     }));
+app.use(globalLimiter);
 app.use(express.json());
+
 app.use(express.urlencoded({ extended: true }));
 
 app.get('/health', (req, res) => {
