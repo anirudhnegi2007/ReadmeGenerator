@@ -11,15 +11,11 @@ console.log("PROJECT ID:", process.env.FIREBASE_PROJECT_ID);
 initializeFirebaseAdmin();
 
 const app = express();
-
-const allowedOrigins = [
-  process.env.FRONTEND_URL,
-  'http://localhost:5173'
-].filter(Boolean);
+const allowedOrigns = [process.env.FRONTEND_URL, `http://localhost:5173`].filter(Boolean);
 
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: allowedOrigns,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'x-github-token'],
@@ -38,19 +34,21 @@ app.use('/services', router);
 
 // 404 handler
 app.use((req, res) => {
-  res.status(404).json({error : 'Not Found',
-    message:`the Route${req.method} ${req.originalUrl} not found `});
-  });
-
-  //Global error handler 
-  app.use((err, req, res, next)=>{
-console.error("Global error handler:",{
-  message: err.message,
-  stack: err.stack,
-  status: err.status || 500,
+  res.status(404).json({
+    error: 'Not Found',
+    message: `the Route${req.method} ${req.originalUrl} not found `
   });
 });
-  
+
+//Global error handler 
+app.use((err, req, res, next) => {
+  console.error("Global error handler:", {
+    message: err.message,
+    stack: err.stack,
+    status: err.status || 500,
+  });
+});
+
 
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
