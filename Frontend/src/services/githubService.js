@@ -1,3 +1,5 @@
+const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
 export const parseGitHubUrl = (url) => {
   const regex = /github\.com\/([^\/]+)\/([^\/]+)/;
   const match = url.match(regex);
@@ -145,7 +147,7 @@ export const generateReadmeWithGemini = async (repoData, repoFiles, selectedFile
     if (githubToken) {
       headers['x-github-token'] = githubToken;
     }
-    const response = await fetch('http://localhost:5000/services/generate', {
+    const response = await fetch(`${BACKEND_URL}/services/generate`, {
       method: 'POST',
       headers,
       body: JSON.stringify({

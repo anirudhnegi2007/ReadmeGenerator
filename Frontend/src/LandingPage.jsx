@@ -5,6 +5,8 @@ import {
 } from 'lucide-react';
 import ReviewSection from './components/ReviewSection.jsx';
 
+const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
 const LandingPage = () => {
   const [githubUrl, setGithubUrl] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -18,7 +20,7 @@ const LandingPage = () => {
     setError(null);
     setReadme('');
     try {
-      const response = await fetch('http://localhost:5000/services/generate', {
+      const response = await fetch(`${BACKEND_URL}/services/generate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -15,7 +15,7 @@ export const globalLimiter = rateLimit({
 // Stricter rate limiter for heavy or sensitive endpoints (15 requests per 15 minutes)
 export const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  limit: 15, // Limit each IP to 15 requests per window (e.g. for AI generation, login, register)
+  limit: 15, // Limit each IP to 15 requests per window 
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   message: {

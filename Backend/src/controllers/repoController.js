@@ -5,15 +5,6 @@
 // Build prompt for AI
 // 
 
-
-
-
-
-
-
-
-
-
   const fetchRepositoryData = async (owner, repo) => {
     const res = await fetch(`https://api.github.com/repos/${owner}/${repo}`);
     if (!res.ok) {
@@ -73,49 +64,6 @@
     });
     return root;
   };
-
-
-
-
-
-  //  // Analyze repository structure
-  // const analyzeRepository = (files) => {
-  //   const stats = {
-  //     totalFiles: 0,
-  //     totalFolders: 0,
-  //     languages: new Set(),
-  //     hasTests: false,
-  //     hasDocumentation: false,
-  //     hasCICD: false,
-  //     frameworks: new Set()
-  //   };
-
-  //   const traverse = (items) => {
-  //     items.forEach(item => {
-  //       if (item.type === 'folder') {
-  //         stats.totalFolders++;
-  //         if (item.name === 'tests' || item.name === '__tests__') stats.hasTests = true;
-  //         if (item.children) traverse(item.children);
-  //       } else {
-  //         stats.totalFiles++;
-  //         if (item.language) stats.languages.add(item.language);
-  //         if (item.name === 'README.md') stats.hasDocumentation = true;
-  //       }
-  //     });
-  //   };
-
-  //   traverse(files);
-
-  //   // Detect frameworks (simplified)
-  //   if (stats.languages.has('jsx') || stats.languages.has('tsx')) {
-  //     stats.frameworks.add('React');
-  //   }
-
-  //   return stats;
-  // };
-
-
-
 
 
   export const getUserRepos= async (req, res) => {
