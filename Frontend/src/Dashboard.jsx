@@ -206,7 +206,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white">
+    <div className="flex flex-col h-screen bg-slate-900 text-white">
       {/* Header */}
       <header className="bg-slate-800 border-b border-slate-700 px-6 py-4 sticky top-0 z-50">
         <div className="flex items-center justify-between">
@@ -325,7 +325,7 @@ const Dashboard = () => {
         </div>
       </header>
 
-      <div className="flex h-[calc(100vh-185px)]">
+      <div className="flex flex-1 min-h-0">
         {/* Left Sidebar - Repository Files */}
         <div className="w-80 bg-slate-800 border-r border-slate-700 flex flex-col">
           {repoData ? (
